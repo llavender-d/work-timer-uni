@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Work Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .countdown {
+      font-size: 1.5em;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Work Timer</h2>
+  <label>Work time (minutes):</label>
+  <input type="number" id="timeInput" min="1" value="25">
+  
+  <label>Notes:</label>
+  <textarea id="notesInput" placeholder="What are you working on?"></textarea>
+  
+  <button onclick="startTimer()">Start Timer</button>
+  
+  <div class="countdown" id="countdownDisplay"></div>
+  
+  <script>
+    const WEBHOOK_URL = "https://YOUR-N8N-WEBHOOK-URL"; // Replace with your n8n webhook URL
+
+    function startTimer() {
+      const minutes = document.getElementById('timeInput').value;
+      const notes = document.getElementById('notesInput').value;
+      if (!minutes || minutes <= 0) {
+        alert("Please enter a valid time.");
+        return;
+      }
+
+      // Send data to n8n
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          minutes: minutes,
+          notes: notes,
+          start_time: new Date().toISOString()
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to send data");
+        startCountdown(minutes * 60);
+      })
+      .catch(error => alert(error));
+    }
+
+    function startCountdown(seconds) {
+      const display = document.getElementById('countdownDisplay');
+      function updateDisplay() {
+        let min = Math.floor(seconds / 60);
+        let sec = seconds % 60;
+        display.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+        if (seconds > 0) {
+          seconds--;
+          setTimeout(updateDisplay, 1000);
+        } else {
+          display.textContent = "Time's up!";
+        }
+      }
+      updateDisplay();
+    }
+  </script>
+</body>
+</html>
