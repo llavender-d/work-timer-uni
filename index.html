@@ -45,49 +45,63 @@
   
   <div class="countdown" id="countdownDisplay"></div>
   
-  <script>
-    const WEBHOOK_URL = "https://f5e27f339532.ngrok-free.app/webhook/899eb9d1-67e5-4c4b-88f5-9f52e45b1d4c"; // Replace with your n8n webhook URL
+<script>
+  // Replace with your own n8n webhook URL
+  const WEBHOOK_URL = "https://f5e27f339532.ngrok-free.app/webhook/899eb9d1-67e5-4c4b-88f5-9f52e45b1d4c";
 
-    function startTimer() {
-      const minutes = document.getElementById('timeInput').value;
-      const notes = document.getElementById('notesInput').value;
-      if (!minutes || minutes <= 0) {
-        alert("Please enter a valid time.");
-        return;
-      }
+  function startTimer() {
+    const minutes = document.getElementById('timeInput').value;
+    const notes = document.getElementById('notesInput').value;
 
-      // Send data to n8n
-      fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          minutes: minutes,
-          notes: notes,
-          start_time: new Date().toISOString()
-        })
+    if (!minutes || minutes <= 0) {
+      alert("Please enter a valid time.");
+      return;
+    }
+
+    // Send data to n8n
+    fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include", // ensures browser includes cookies if required
+      body: JSON.stringify({
+        minutes: minutes,
+        notes: notes,
+        start_time: new Date().toISOString()
       })
+    })
       .then(response => {
         if (!response.ok) throw new Error("Failed to send data");
+        return response.json().catch(() => ({})); // handle empty response gracefully
+      })
+      .then(data => {
+        console.log("Webhook response:", data);
         startCountdown(minutes * 60);
       })
-      .catch(error => alert(error));
+      .catch(error => {
+        console.error("Fetch error:", error);
+        alert(error.message);
+      });
+  }
+
+  function startCountdown(seconds) {
+    const display = document.getElementById('countdownDisplay');
+
+    function updateDisplay() {
+      let min = Math.floor(seconds / 60);
+      let sec = seconds % 60;
+      display.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+      if (seconds > 0) {
+        seconds--;
+        setTimeout(updateDisplay, 1000);
+      } else {
+        display.textContent = "Time's up!";
+      }
     }
 
-    function startCountdown(seconds) {
-      const display = document.getElementById('countdownDisplay');
-      function updateDisplay() {
-        let min = Math.floor(seconds / 60);
-        let sec = seconds % 60;
-        display.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
-        if (seconds > 0) {
-          seconds--;
-          setTimeout(updateDisplay, 1000);
-        } else {
-          display.textContent = "Time's up!";
-        }
-      }
-      updateDisplay();
-    }
-  </script>
+    updateDisplay();
+  }
+</script>
 </body>
 </html>
